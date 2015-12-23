@@ -7,10 +7,16 @@ from __future__ import unicode_literals, absolute_import
 
 import json
 import logging
+import sys
 
 from .base import GrantTypeBase
 from .. import errors
 from ..request_validator import RequestValidator
+
+try:
+    from django.utils.translation import ugettext_lazy as _
+except ImportError as err:
+    sys.exit(err)
 
 log = logging.getLogger(__name__)
 
@@ -162,11 +168,11 @@ class ResourceOwnerPasswordCredentialsGrant(GrantTypeBase):
         for param in ('grant_type', 'username', 'password'):
             if not getattr(request, param, None):
                 raise errors.InvalidRequestError(
-                    'Request is missing %s parameter.' % param, request=request)
+                    _(u'Request is missing %s parameter.' % param).__unicode__(), request=request)
 
         for param in ('grant_type', 'username', 'password', 'scope'):
             if param in request.duplicate_params:
-                raise errors.InvalidRequestError(description='Duplicate %s parameter.' % param, request=request)
+                raise errors.InvalidRequestError(description=_(u'Duplicate %s parameter.' % param).__unicode__(), request=request)
 
         # This error should rarely (if ever) occur if requests are routed to
         # grant type handlers based on the grant_type parameter.
@@ -177,13 +183,11 @@ class ResourceOwnerPasswordCredentialsGrant(GrantTypeBase):
         if not self.request_validator.validate_user(request.username,
                                                     request.password, request.client, request):
             raise errors.InvalidGrantError(
-                'Invalid credentials given.', request=request)
+                _('Invalid credentials given.').__unicode__(), request=request)
         else:
             if not hasattr(request.client, 'client_id'):
                 raise NotImplementedError(
-                    'Validate user must set the '
-                    'request.client.client_id attribute '
-                    'in authenticate_client.')
+                    _(u'Validate user must set the request.client.client_id attribute in authenticate_client.').__unicode__())
         log.debug('Authorizing access to user %r.', request.user)
 
         # Ensure client is authorized use of this grant type
